@@ -13,4 +13,15 @@ fn main() {
         println!("{}", x);
     }
 
+    println!("{} nums are left", nums.len());
+
+    nums.insert(0, 5);
+    nums.insert(1, 6);
+    nums.insert(2, 8);
+    nums.insert(2, 7);
+
+    while let Some(x) = nums.pop_front() {
+        println!("{}", x);
+    }
+
 }
