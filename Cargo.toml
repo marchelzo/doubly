@@ -1,0 +1,10 @@
+[package]
+
+name = "doubly"
+version = "0.0.1"
+authors = ["Bradley Garagan <bradgaragan@gmail.com>"]
+
+[[bin]]
+name = "dtest"
+version = "0.0.1"
+authors = ["Bradley Garagan <bradgaragan@gmail.com>"]
