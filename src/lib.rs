@@ -3,6 +3,7 @@ use std::ptr;
 use std::cell::Cell;
 use std::num::SignedInt;
 use std::ops::Index;
+use std::ops::IndexMut;
 
 struct Node<T> {
     prev: *mut Node<T>,
@@ -159,7 +160,7 @@ impl<T> DoublyLinkedList<T> {
         self.go_to(i);
     }
 
-    fn pop_back(&mut self) -> Option<T> {
+    pub fn pop_back(&mut self) -> Option<T> {
         unsafe {
             if self.length == 0 {
                 None
@@ -178,7 +179,7 @@ impl<T> DoublyLinkedList<T> {
         }
     }
 
-    fn pop_front(&mut self) -> Option<T> {
+    pub fn pop_front(&mut self) -> Option<T> {
         unsafe {
             if self.length == 0 {
                 None
@@ -201,6 +202,13 @@ impl<T> Index<usize> for DoublyLinkedList<T> {
     type Output = T;
     fn index(&self, i: &usize) -> &T {
         self.index(*i).unwrap()
+    }
+}
+
+impl<T> IndexMut<usize> for DoublyLinkedList<T> {
+    type Output = T;
+    fn index_mut(&mut self, i: &usize) -> &mut T {
+        self.index_mut(*i).unwrap()
     }
 }
 
