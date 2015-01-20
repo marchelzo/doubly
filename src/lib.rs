@@ -248,6 +248,16 @@ impl<T> DoublyLinkedList<T> {
             }
         }
     }
+
+    pub fn concat(&mut self, other: DoublyLinkedList<T>) {
+        if self.length == 0 { *self = other; return; }
+
+        unsafe {
+            self.length += other.len();
+            (*self.last).next = other.first;
+            self.last = other.last;
+        }
+    }
 }
 
 impl<T> Index<usize> for DoublyLinkedList<T> {

@@ -36,14 +36,21 @@ fn main() {
         println!("{}", x);
     }
 
-    //for x in 1..10000000 { nums.push_front(x); }
+    for x in 1..100 { nums.push_front(x); }
 
     //println!("{}", nums.pop_front().unwrap());
     
-    for x in 1..10000000 { nums.push_back(x); }
-
-    for x in 5..100 { nums.insert(34030, x); }
-
     println!("{}", nums[0]);
 
+    let mut other_nums = DoublyLinkedList::new_singleton(5u32);
+
+    for x in 1..20 { other_nums.push_front(x); }
+
+    nums.concat(other_nums);
+
+    println!("Concatenated lists:");
+
+    while let Some(x) = nums.pop_front() {
+        println!("{}", x);
+    }
 }
