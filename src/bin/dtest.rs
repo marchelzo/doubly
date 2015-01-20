@@ -3,54 +3,20 @@ extern crate doubly;
 use doubly::DoublyLinkedList;
 
 fn main() {
-    let mut nums: DoublyLinkedList<u32> = DoublyLinkedList::new_empty();
+    test_len();
+}
 
-    for x in 1..100 { nums.push_back(x); println!("{}", x); }
+fn test_len() {
+    let mut nums = DoublyLinkedList::new_singleton(4i32);
 
-    let mut vec: Vec<u32> = vec![];
+    for x in 0..100 { nums.push_front(x); }
+    for x in 0..100 { nums.push_back(x); }
 
-    println!("\n\n ====== ADDED NUMBERS ======\n");
+    nums.insert(40,8);
 
-    while let Some(x) = nums.pop_front() {
-        println!("{}", x);
-    }
+    println!("LENGTH: {}", nums.len());
 
-    println!("{} nums are left", nums.len());
+    nums.insert(200,56);
 
-    nums.insert(0, 5);
-    nums.insert(1, 6);
-    nums.insert(2, 8);
-    nums.insert(2, 7);
-
-    while let Some(x) = nums.pop_front() {
-        println!("{}", x);
-    }
-
-    assert_eq!(0, nums.len());
-
-    for x in 1..10 { nums.push_back(x); }
-
-    nums.remove(3);
-
-    while let Some(x) = nums.pop_front() {
-        println!("{}", x);
-    }
-
-    for x in 1..100 { nums.push_front(x); }
-
-    //println!("{}", nums.pop_front().unwrap());
-    
-    println!("{}", nums[0]);
-
-    let mut other_nums = DoublyLinkedList::new_singleton(5u32);
-
-    for x in 1..20 { other_nums.push_front(x); }
-
-    nums.concat(other_nums);
-
-    println!("Concatenated lists:");
-
-    while let Some(x) = nums.pop_front() {
-        println!("{}", x);
-    }
+    assert_eq!(nums.len(), 202);
 }
