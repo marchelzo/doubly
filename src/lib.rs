@@ -1,9 +1,12 @@
+extern crate test;
+
 use std::mem;
 use std::ptr;
 use std::cell::Cell;
 use std::num::SignedInt;
 use std::ops::Index;
 use std::ops::IndexMut;
+use test::Bencher;
 
 struct Node<T> {
     prev: *mut Node<T>,
@@ -47,19 +50,19 @@ impl<T> DoublyLinkedList<T> {
         self.length
     }
 
-    pub fn first_mut(&mut self) -> Option<&mut T> {
+    pub fn front_mut(&mut self) -> Option<&mut T> {
         unsafe { self.first.as_mut().map(|n| { &mut n.value }) }
     }
 
-    pub fn first(&self) -> Option<&T> {
+    pub fn front(&self) -> Option<&T> {
         unsafe { self.first.as_ref().map(|n| { &n.value }) }
     }
 
-    pub fn last_mut(&mut self) -> Option<&mut T> {
+    pub fn back_mut(&mut self) -> Option<&mut T> {
         unsafe { self.last.as_mut().map(|n| { &mut n.value }) }
     }
 
-    pub fn last(&self) -> Option<&T> {
+    pub fn back(&self) -> Option<&T> {
         unsafe { self.last.as_ref().map(|n| { &n.value }) }
     }
 
@@ -219,6 +222,31 @@ impl<T> DoublyLinkedList<T> {
             }
         }
     }
+
+    pub fn remove(&mut self, i: usize) -> T {
+        if i >= self.length {
+            panic!("DoublyLinkedList::delete: index out of range");
+        } else {
+            if (i == 0) { return self.pop_front().unwrap() }
+            if i + 1 == self.length { return self.pop_back().unwrap() }
+            unsafe {
+                self.go_to(i);
+
+                let val = ptr::read_and_zero(&mut (*self.current.get()).value);
+
+                (*(*self.current.get()).next).prev = (*self.current.get()).prev;
+                (*(*self.current.get()).prev).next = (*self.current.get()).next;
+
+                let old_node = self.current.get();
+                self.current.set((*self.current.get()).next);
+                drop(mem::transmute::<_, Box<Node<T>>>(old_node));
+
+                self.length -= 1;
+
+                val
+            }
+        }
+    }
 }
 
 impl<T> Index<usize> for DoublyLinkedList<T> {
@@ -252,21 +280,29 @@ impl<T> Node<T> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::DoublyLinkedList;
 
     #[test]
     fn test_list() {
         let mut nums = DoublyLinkedList::new_singleton(5i32);
-        assert_eq!(5i32, *nums.last().unwrap());
+        assert_eq!(5i32, *nums.back().unwrap());
         assert_eq!(nums.len(), 1);
         nums.push_front(7i32);
         assert_eq!(nums.len(), 2);
-        assert_eq!(7i32, *nums.first().unwrap());
+        assert_eq!(7i32, *nums.front().unwrap());
         nums.push_front(9i32);
         nums.push_front(6i32);
         assert_eq!(5i32, *nums.index(3).unwrap());
         nums.push_back(10i32);
         assert_eq!(5i32, *nums.index(3).unwrap());
   }
+}
+
+#[bench]
+fn bench_20000_ints(b:  &mut Bencher) {
+    b.iter(|| {
+        let mut ns: DoublyLinkedList<i64> = DoublyLinkedList::new_empty();
+        for x in 0..20 { ns.push_back(x); }
+    });
 }
