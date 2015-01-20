@@ -6,6 +6,7 @@ use std::cell::Cell;
 use std::num::SignedInt;
 use std::ops::Index;
 use std::ops::IndexMut;
+use std::default::Default;
 use test::Bencher;
 
 struct Node<T> {
@@ -260,6 +261,12 @@ impl<T> IndexMut<usize> for DoublyLinkedList<T> {
     type Output = T;
     fn index_mut(&mut self, i: &usize) -> &mut T {
         self.index_mut(*i).unwrap()
+    }
+}
+
+impl<T> Default for DoublyLinkedList<T> {
+    fn default() -> DoublyLinkedList<T> {
+        DoublyLinkedList::new_empty()
     }
 }
 
