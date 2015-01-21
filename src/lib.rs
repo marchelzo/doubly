@@ -205,21 +205,18 @@ impl<T> DoublyLinkedList<T> {
         if i > self.length {
             panic!("DoublyLinkedList::insert: index out of range");
         } else {
-            if self.length == 0 { *self = DoublyLinkedList::new_singleton(val); }
-            else {
-                if i == self.length { self.push_back(val); }
-                else if i == 0      { self.push_front(val); }
-                else { unsafe {
-                        self.go_to(i);
-                        let new = Node::new_on_heap(val);
-                        (*new).next = self.current.get();
-                        (*new).prev = (*self.current.get()).prev;
-                        (*(*(self.current.get())).prev).next = new;
-                        (*self.current.get()).prev = new;
-                        self.current.set(new);
-                        self.length += 1;
-                    }
-                }
+            if self.length == 0 { *self = DoublyLinkedList::new_singleton(val); return; }
+            if i == self.length { self.push_back(val); return; }
+            if i == 0           { self.push_front(val); return; }
+            unsafe {
+                self.go_to(i);
+                let new = Node::new_on_heap(val);
+                (*new).next = self.current.get();
+                (*new).prev = (*self.current.get()).prev;
+                (*(*(self.current.get())).prev).next = new;
+                (*self.current.get()).prev = new;
+                self.current.set(new);
+                self.length += 1;
             }
         }
     }
