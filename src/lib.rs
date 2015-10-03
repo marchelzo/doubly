@@ -4,6 +4,7 @@ use std::cell::Cell;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::default::Default;
+use std::iter::FromIterator;
 
 unsafe fn as_ref<'a, T>(ptr: *const T) -> Option<&'a T> {
     if ptr.is_null() {
@@ -30,9 +31,9 @@ pub struct IterMut<'a, T: 'a> {
 }
 
 struct Node<T> {
-    prev: *mut Node<T>,
+    prev:  *mut Node<T>,
     value: T,
-    next: *mut Node<T>
+    next:  *mut Node<T>
 }
 
 pub struct DoublyLinkedList<T> {
@@ -44,7 +45,7 @@ pub struct DoublyLinkedList<T> {
 }
 
 impl<'a, T> DoublyLinkedList<T> {
-    pub fn new_empty() -> DoublyLinkedList<T> {
+    pub fn new() -> DoublyLinkedList<T> {
         DoublyLinkedList {
             current: Cell::new(ptr::null_mut()),
             first:   ptr::null_mut(),
@@ -54,7 +55,7 @@ impl<'a, T> DoublyLinkedList<T> {
         }
     }
 
-    pub fn new_singleton(v: T) -> DoublyLinkedList<T> {
+    pub fn singleton(v: T) -> DoublyLinkedList<T> {
         unsafe {
             let node = Node::new_on_heap(v);
             DoublyLinkedList {
@@ -114,7 +115,7 @@ impl<'a, T> DoublyLinkedList<T> {
     pub fn push_back(&mut self, val: T) {
         unsafe {
             if self.length == 0 {
-                *self = DoublyLinkedList::new_singleton(val);
+                *self = DoublyLinkedList::singleton(val);
             } else {
                 (*(self.last)).next = Node::new_on_heap(val);
                 (*(*(self.last)).next).prev = self.last;
@@ -127,7 +128,7 @@ impl<'a, T> DoublyLinkedList<T> {
     pub fn push_front(&mut self, val: T) {
         unsafe {
             if self.length == 0 {
-                *self = DoublyLinkedList::new_singleton(val);
+                *self = DoublyLinkedList::singleton(val);
             } else {
                 (*(self.first)).prev = Node::new_on_heap(val);
                 (*(*(self.first)).prev).next = self.first;
@@ -242,7 +243,7 @@ impl<'a, T> DoublyLinkedList<T> {
         if i > self.length {
             panic!("DoublyLinkedList::insert: index out of range");
         } else {
-            if self.length == 0 { *self = DoublyLinkedList::new_singleton(val); return; }
+            if self.length == 0 { *self = DoublyLinkedList::singleton(val); return; }
             if i == self.length { self.push_back(val); return; }
             if i == 0           { self.push_front(val); return; }
             unsafe {
@@ -309,7 +310,7 @@ impl<T> IndexMut<usize> for DoublyLinkedList<T> {
 
 impl<T> Default for DoublyLinkedList<T> {
     fn default() -> DoublyLinkedList<T> {
-        DoublyLinkedList::new_empty()
+        DoublyLinkedList::new()
     }
 }
 
@@ -355,6 +356,18 @@ impl<'a, T> Iterator for IterMut<'a, T> {
     }
 }
 
+impl<T> FromIterator<T> for DoublyLinkedList<T> {
+    fn from_iter<A>(iterator: A) -> Self where A: IntoIterator<Item=T> {
+        let mut list = Self::new();
+
+        for x in iterator {
+            list.push_back(x);
+        }
+
+        return list;
+    }
+}
+
 impl<T> Node<T> {
     fn new(v: T) -> Node<T> {
         Node {
@@ -377,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_list() {
-        let mut nums = DoublyLinkedList::new_singleton(5i32);
+        let mut nums = DoublyLinkedList::singleton(5i32);
         assert_eq!(5i32, *nums.back().unwrap());
         assert_eq!(nums.len(), 1);
         nums.push_front(7i32);
@@ -392,7 +405,7 @@ mod tests {
 
     #[test]
     fn test_len() {
-        let mut nums = DoublyLinkedList::new_singleton(4i32);
+        let mut nums = DoublyLinkedList::singleton(4i32);
 
         for x in 0..100 { nums.push_front(x); }
 

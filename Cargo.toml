@@ -1,7 +1,7 @@
 [package]
 
 name = "doubly"
-version = "1.0.2"
+version = "1.1.0"
 authors = ["Bradley Garagan <bradgaragan@gmail.com>"]
 description = "Doubly linked lists in rust"
 homepage = "https://github.com/marchelzo/doubly"
