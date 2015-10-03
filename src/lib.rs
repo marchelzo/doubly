@@ -21,6 +21,14 @@ unsafe fn as_mut<'a, T>(ptr: *mut T) -> Option<&'a mut T> {
     }
 }
 
+pub struct Iter<'a, T: 'a> {
+    next: Option<&'a Node<T>>
+}
+
+pub struct IterMut<'a, T: 'a> {
+    next: Option<&'a mut Node<T>>
+}
+
 struct Node<T> {
     prev: *mut Node<T>,
     value: T,
@@ -77,6 +85,30 @@ impl<'a, T> DoublyLinkedList<T> {
 
     pub fn back(&self) -> Option<&'a T> {
         unsafe { as_ref(self.last).map(|n| { &n.value }) }
+    }
+
+    pub fn iter(&self) -> Iter<'a, T> {
+        unsafe {
+            Iter {
+                next: if self.first.is_null() {
+                    None
+                } else {
+                    Some(&*self.first)
+                }
+            }
+        }
+    }
+
+    pub fn iter_mut(&self) -> IterMut<'a, T> {
+        unsafe {
+            IterMut {
+                next: if self.first.is_null() {
+                    None
+                } else {
+                    Some(&mut *self.first)
+                }
+            }
+        }
     }
 
     pub fn push_back(&mut self, val: T) {
@@ -281,6 +313,48 @@ impl<T> Default for DoublyLinkedList<T> {
     }
 }
 
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            match self.next {
+                None => None,
+                Some(node) => {
+                    let result = node;
+                    self.next = if result.next.is_null() {
+                        None
+                    } else {
+                        Some(&*result.next)
+                    };
+
+                    return Some(&(*result.next).value);
+                }
+            }
+        }
+    }
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            match self.next.take() {
+                None => None,
+                Some(node) => {
+                    let result = node;
+                    self.next = if result.next.is_null() {
+                        None
+                    } else {
+                        Some(&mut *result.next)
+                    };
+
+                    return Some(&mut (*result.next).value);
+                }
+            }
+        }
+    }
+}
+
 impl<T> Node<T> {
     fn new(v: T) -> Node<T> {
         Node {
@@ -293,7 +367,7 @@ impl<T> Node<T> {
     unsafe fn new_on_heap(v: T) -> *mut Node<T> {
         let node = Box::new(Node::new(v));
         let node: *mut Node<T> = mem::transmute(node);
-        node
+        return node;
     }
 }
 
