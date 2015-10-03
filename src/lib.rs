@@ -327,7 +327,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
                         Some(&*result.next)
                     };
 
-                    return Some(&(*result.next).value);
+                    return Some(&(*result).value);
                 }
             }
         }
@@ -348,7 +348,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
                         Some(&mut *result.next)
                     };
 
-                    return Some(&mut (*result.next).value);
+                    return Some(&mut (*result).value);
                 }
             }
         }
