@@ -72,6 +72,10 @@ impl<'a, T> DoublyLinkedList<T> {
         self.length
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.length == 0
+    }
+
     pub fn front_mut(&mut self) -> Option<&'a mut T> {
         unsafe { as_mut(self.first).map(|n| { &mut n.value }) }
     }
@@ -261,7 +265,7 @@ impl<'a, T> DoublyLinkedList<T> {
 
     pub fn remove(&mut self, i: usize) -> T {
         if i >= self.length {
-            panic!("DoublyLinkedList::delete: index out of range");
+            panic!("DoublyLinkedList::remove: index out of range");
         } else {
             if i == 0 { return self.pop_front().unwrap() }
             if i + 1 == self.length { return self.pop_back().unwrap() }
@@ -284,13 +288,12 @@ impl<'a, T> DoublyLinkedList<T> {
         }
     }
 
-    pub fn concat(&mut self, other: DoublyLinkedList<T>) {
-        if self.length == 0 { *self = other; return; }
-
+    pub fn append(&mut self, other: &mut DoublyLinkedList<T>) {
         unsafe {
             self.length += other.len();
             (*self.last).next = other.first;
             self.last = other.last;
+            *other = Self::new();
         }
     }
 }
@@ -430,4 +433,47 @@ mod tests {
         assert_eq!(nums.len(), 227);
     }
 
+    #[test]
+    fn test_iter() {
+        let v = vec![16, 29, 42, 1992];
+
+        let list: DoublyLinkedList<i32> = v.iter().cloned().collect();
+
+        assert_eq!(list.iter().cloned().collect::<Vec<i32>>(), v);
+    }
+
+    #[test]
+    fn test_append() {
+        let mut a: DoublyLinkedList<i32> = [12, 14, 18, 29, 40].iter().cloned().collect();
+        let mut b: DoublyLinkedList<i32> = [18, 20, 38, 48, 19].iter().cloned().collect();
+
+        let mut v: Vec<i32> = Vec::new();
+
+        for &x in a.iter() {
+            v.push(x);
+        }
+
+        for &x in b.iter() {
+            v.push(x);
+        }
+
+        a.append(&mut b);
+
+        assert_eq!(b.len(), 0);
+
+        assert_eq!(a.len(), 10);
+
+        assert_eq!(v, a.iter().cloned().collect::<Vec<i32>>());
+    }
+
+    #[test]
+    fn test_empty() {
+        let mut dl = DoublyLinkedList::new();
+
+        assert!(dl.is_empty());
+
+        dl.push_front("string");
+
+        assert!(!dl.is_empty());
+    }
 }
