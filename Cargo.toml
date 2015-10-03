@@ -1,10 +1,9 @@
 [package]
 
 name = "doubly"
-version = "0.0.1"
+version = "1.0.0"
 authors = ["Bradley Garagan <bradgaragan@gmail.com>"]
-
-[[bin]]
-name = "dtest"
-version = "0.0.1"
-authors = ["Bradley Garagan <bradgaragan@gmail.com>"]
+description = "Doubly linked lists in rust"
+homepage = "https://github.com/marchelzo/doubly"
+keywords = ["container", "list", "linked"]
+license = "MIT"

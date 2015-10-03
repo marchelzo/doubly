@@ -1,13 +1,25 @@
-extern crate test;
-
 use std::mem;
 use std::ptr;
 use std::cell::Cell;
-use std::num::SignedInt;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::default::Default;
-use test::Bencher;
+
+unsafe fn as_ref<'a, T>(ptr: *const T) -> Option<&'a T> {
+    if ptr.is_null() {
+        None
+    } else {
+        Some(&*ptr)
+    }
+}
+
+unsafe fn as_mut<'a, T>(ptr: *mut T) -> Option<&'a mut T> {
+    if ptr.is_null() {
+        None
+    } else {
+        Some(&mut *ptr)
+    }
+}
 
 struct Node<T> {
     prev: *mut Node<T>,
@@ -23,7 +35,7 @@ pub struct DoublyLinkedList<T> {
     length:  usize
 }
 
-impl<T> DoublyLinkedList<T> {
+impl<'a, T> DoublyLinkedList<T> {
     pub fn new_empty() -> DoublyLinkedList<T> {
         DoublyLinkedList {
             current: Cell::new(ptr::null_mut()),
@@ -51,20 +63,20 @@ impl<T> DoublyLinkedList<T> {
         self.length
     }
 
-    pub fn front_mut(&mut self) -> Option<&mut T> {
-        unsafe { self.first.as_mut().map(|n| { &mut n.value }) }
+    pub fn front_mut(&mut self) -> Option<&'a mut T> {
+        unsafe { as_mut(self.first).map(|n| { &mut n.value }) }
     }
 
-    pub fn front(&self) -> Option<&T> {
-        unsafe { self.first.as_ref().map(|n| { &n.value }) }
+    pub fn front(&self) -> Option<&'a T> {
+        unsafe { as_ref(self.first).map(|n| { &n.value }) }
     }
 
-    pub fn back_mut(&mut self) -> Option<&mut T> {
-        unsafe { self.last.as_mut().map(|n| { &mut n.value }) }
+    pub fn back_mut(&mut self) -> Option<&'a mut T> {
+        unsafe { as_mut(self.last).map(|n| { &mut n.value }) }
     }
 
-    pub fn back(&self) -> Option<&T> {
-        unsafe { self.last.as_ref().map(|n| { &n.value }) }
+    pub fn back(&self) -> Option<&'a T> {
+        unsafe { as_ref(self.last).map(|n| { &n.value }) }
     }
 
     pub fn push_back(&mut self, val: T) {
@@ -89,57 +101,50 @@ impl<T> DoublyLinkedList<T> {
                 (*(*(self.first)).prev).next = self.first;
                 self.first = (*(self.first)).prev;
                 self.length += 1;
+                self.index.set(self.index.get() + 1);
             }
         }
     }
 
-    fn index(&self, i: usize) -> Option<&T> {
+    fn index(&self, i: usize) -> Option<&'a T> {
         unsafe {
             if i >= self.length {
                 None
             } else {
-                if self.length / 2 > i {
-                    if (self.index.get() - i as isize).abs() > i as isize {
-                        self.go_to_from_start(i);
-                    } else {
-                        self.go_to(i);
-                    }
-                } else {
-                    if (self.index.get() - i as isize).abs() >= (self.length as isize - i as isize).abs() {
-                        self.go_to_from_end(i);
-                    } else {
-                        self.go_to(i);
-                    }
-                }
+                self.go_to(i);
                 Some(&(*self.current.get()).value)
             }
         }
     }
 
-    fn index_mut(&mut self, i: usize) -> Option<&mut T> {
+    fn index_mut(&mut self, i: usize) -> Option<&'a mut T> {
         unsafe {
             if i >= self.length {
                 None
-            } else {
-                if self.length / 2 > i {
-                    if (self.index.get() - i as isize).abs() > i as isize {
-                        self.go_to_from_start(i);
-                    } else {
-                        self.go_to(i);
-                    }
-                } else {
-                    if (self.index.get() - i as isize).abs() >= (self.length as isize - i as isize).abs() {
-                        self.go_to_from_end(i);
-                    } else {
-                        self.go_to(i);
-                    }
-                }
+            } else  {
+                self.go_to(i);
                 Some(&mut (*self.current.get()).value)
             }
         }
     }
 
     fn go_to(&self, i: usize) {
+        if self.length / 2 > i {
+            if (self.index.get() - i as isize).abs() > i as isize {
+                self.go_to_from_start(i);
+            } else {
+                self.go_to_from_current(i);
+            }
+        } else {
+            if (self.index.get() - i as isize).abs() >= (self.length as isize - i as isize).abs() {
+                self.go_to_from_end(i);
+            } else {
+                self.go_to_from_current(i);
+            }
+        }
+    }
+
+    fn go_to_from_current(&self, i: usize) {
         unsafe {
             while (i as isize) > self.index.get() {
                 self.current.set((*self.current.get()).next);
@@ -169,7 +174,7 @@ impl<T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read_and_zero(&mut (*self.last).value);
+                let val = ptr::read(&mut (*self.last).value);
                 if self.current.get() == self.last {
                     self.current.set((*self.last).prev);
                     self.index.set(self.index.get() - 1);
@@ -188,7 +193,7 @@ impl<T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read_and_zero(&mut (*self.first).value);
+                let val = ptr::read(&mut (*self.first).value);
                 if self.current.get() == self.first {
                     self.current.set((*self.first).next);
                 }
@@ -225,12 +230,12 @@ impl<T> DoublyLinkedList<T> {
         if i >= self.length {
             panic!("DoublyLinkedList::delete: index out of range");
         } else {
-            if (i == 0) { return self.pop_front().unwrap() }
+            if i == 0 { return self.pop_front().unwrap() }
             if i + 1 == self.length { return self.pop_back().unwrap() }
             unsafe {
                 self.go_to(i);
 
-                let val = ptr::read_and_zero(&mut (*self.current.get()).value);
+                let val = ptr::read(&mut (*self.current.get()).value);
 
                 (*(*self.current.get()).next).prev = (*self.current.get()).prev;
                 (*(*self.current.get()).prev).next = (*self.current.get()).next;
@@ -259,15 +264,14 @@ impl<T> DoublyLinkedList<T> {
 
 impl<T> Index<usize> for DoublyLinkedList<T> {
     type Output = T;
-    fn index(&self, i: &usize) -> &T {
-        self.index(*i).unwrap()
+    fn index<'a>(&self, i: usize) -> &'a T {
+        self.index(i).unwrap()
     }
 }
 
 impl<T> IndexMut<usize> for DoublyLinkedList<T> {
-    type Output = T;
-    fn index_mut(&mut self, i: &usize) -> &mut T {
-        self.index_mut(*i).unwrap()
+    fn index_mut<'a>(&mut self, i: usize) -> &'a mut T {
+        self.index_mut(i).unwrap()
     }
 }
 
@@ -317,23 +321,26 @@ mod tests {
         let mut nums = DoublyLinkedList::new_singleton(4i32);
 
         for x in 0..100 { nums.push_front(x); }
+
+        assert_eq!(101, nums.len());
+
         for x in 0..100 { nums.push_back(x); }
 
-        nums.insert(40,8);
+        assert_eq!(201, nums.len());
 
-        println!("LENGTH: {}", nums.len());
+        nums.insert(40, 8);
 
-        nums.insert(200,56);
+        assert_eq!(202, nums.len());
 
-        assert_eq!(nums.len(), 202);
+        nums.insert(200, 56);
+
+        assert_eq!(nums.len(), 203);
+
+        for x in 0..24 {
+            nums.insert(12, x);
+        }
+
+        assert_eq!(nums.len(), 227);
     }
 
-}
-
-#[bench]
-fn bench_20000_ints(b:  &mut Bencher) {
-    b.iter(|| {
-        let mut ns: DoublyLinkedList<i64> = DoublyLinkedList::new_empty();
-        for x in 0..20 { ns.push_back(x); }
-    });
 }
