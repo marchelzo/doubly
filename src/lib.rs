@@ -1,3 +1,6 @@
+#![feature(plugin)]
+#![plugin(clippy)]
+
 use std::mem;
 use std::ptr;
 use std::cell::Cell;
@@ -172,12 +175,10 @@ impl<'a, T> DoublyLinkedList<T> {
             } else {
                 self.go_to_from_current(i);
             }
+        } else if (self.index.get() - i as isize).abs() >= (self.length as isize - i as isize).abs() {
+            self.go_to_from_end(i);
         } else {
-            if (self.index.get() - i as isize).abs() >= (self.length as isize - i as isize).abs() {
-                self.go_to_from_end(i);
-            } else {
-                self.go_to_from_current(i);
-            }
+            self.go_to_from_current(i);
         }
     }
 
@@ -211,13 +212,13 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read(&mut (*self.last).value);
+                let val = ptr::read(&(*self.last).value);
                 if self.current.get() == self.last {
                     self.current.set((*self.last).prev);
                     self.index.set(self.index.get() - 1);
                 }
                 self.length -= 1;
-                let old_last = self.last.clone();
+                let old_last = self.last;
                 self.last = (*self.last).prev;
                 drop(mem::transmute::<_, Box<Node<T>>>(old_last));
                 Some(val)
@@ -230,7 +231,7 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read(&mut (*self.first).value);
+                let val = ptr::read(&(*self.first).value);
                 if self.current.get() == self.first {
                     self.current.set((*self.first).next);
                 }
@@ -272,7 +273,7 @@ impl<'a, T> DoublyLinkedList<T> {
             unsafe {
                 self.go_to(i);
 
-                let val = ptr::read(&mut (*self.current.get()).value);
+                let val = ptr::read(&(*self.current.get()).value);
 
                 (*(*self.current.get()).next).prev = (*self.current.get()).prev;
                 (*(*self.current.get()).prev).next = (*self.current.get()).next;
