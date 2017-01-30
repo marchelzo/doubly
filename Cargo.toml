@@ -9,4 +9,4 @@ keywords = ["container", "list", "linked"]
 license = "MIT"
 
 [dependencies]
-clippy = "*"
+clippy = "0.0.112"
