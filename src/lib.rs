@@ -301,13 +301,13 @@ impl<'a, T> DoublyLinkedList<T> {
 
 impl<T> Index<usize> for DoublyLinkedList<T> {
     type Output = T;
-    fn index<'a>(&self, i: usize) -> &'a T {
+    fn index(&self, i: usize) -> &T {
         self.index(i).unwrap()
     }
 }
 
 impl<T> IndexMut<usize> for DoublyLinkedList<T> {
-    fn index_mut<'a>(&mut self, i: usize) -> &'a mut T {
+    fn index_mut(&mut self, i: usize) -> &mut T {
         self.index_mut(i).unwrap()
     }
 }
