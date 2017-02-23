@@ -1,6 +1,3 @@
-#![feature(plugin)]
-#![plugin(clippy)]
-
 use std::mem;
 use std::ptr;
 use std::cell::Cell;
