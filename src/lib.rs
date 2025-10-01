@@ -57,7 +57,7 @@ impl<'a, T> DoublyLinkedList<T> {
 
     pub fn singleton(v: T) -> DoublyLinkedList<T> {
         unsafe {
-            let node = Node::new_on_heap(v);
+            let node = Node::new_boxed(v);
             DoublyLinkedList {
                 current: Cell::new(node),
                 first:   node,
@@ -121,7 +121,7 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 *self = DoublyLinkedList::singleton(val);
             } else {
-                (*(self.last)).next = Node::new_on_heap(val);
+                (*(self.last)).next = Node::new_boxed(val);
                 (*(*(self.last)).next).prev = self.last;
                 self.last = (*(self.last)).next;
                 self.length += 1;
@@ -134,7 +134,7 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 *self = DoublyLinkedList::singleton(val);
             } else {
-                (*(self.first)).prev = Node::new_on_heap(val);
+                (*(self.first)).prev = Node::new_boxed(val);
                 (*(*(self.first)).prev).next = self.first;
                 self.first = (*(self.first)).prev;
                 self.length += 1;
@@ -250,7 +250,7 @@ impl<'a, T> DoublyLinkedList<T> {
             if i == 0           { self.push_front(val); return; }
             unsafe {
                 self.go_to(i);
-                let new = Node::new_on_heap(val);
+                let new = Node::new_boxed(val);
                 (*new).next = self.current.get();
                 (*new).prev = (*self.current.get()).prev;
                 (*(*(self.current.get())).prev).next = new;
@@ -378,7 +378,7 @@ impl<T> Node<T> {
         }
     }
 
-    unsafe fn new_on_heap(v: T) -> *mut Node<T> {
+    unsafe fn new_boxed(v: T) -> *mut Node<T> {
         let node = Box::new(Node::new(v));
         let node: *mut Node<T> = mem::transmute(node);
         return node;
