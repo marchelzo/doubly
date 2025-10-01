@@ -209,16 +209,14 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read(&(*self.last).value);
                 if self.current.get() == self.last {
                     self.current.set((*self.last).prev);
                     self.index.set(self.index.get() - 1);
                 }
                 self.length -= 1;
-                let old_last = self.last;
+                let old_last = mem::transmute::<_, Box<Node<T>>>(self.last);
                 self.last = (*self.last).prev;
-                drop(mem::transmute::<_, Box<Node<T>>>(old_last));
-                Some(val)
+                Some((*old_last).value)
             }
         }
     }
@@ -228,15 +226,13 @@ impl<'a, T> DoublyLinkedList<T> {
             if self.length == 0 {
                 None
             } else {
-                let val = ptr::read(&(*self.first).value);
                 if self.current.get() == self.first {
                     self.current.set((*self.first).next);
                 }
                 self.length -= 1;
-                let old_first = self.first;
+                let old_first = mem::transmute::<_, Box<Node<T>>>(self.first);
                 self.first = (*self.first).next;
-                drop(mem::transmute::<_, Box<Node<T>>>(old_first));
-                Some(val)
+                Some((*old_first).value)
             }
         }
     }
