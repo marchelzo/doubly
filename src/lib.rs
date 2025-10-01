@@ -1,4 +1,3 @@
-use std::mem;
 use std::ptr;
 use std::cell::Cell;
 use std::ops::Index;
@@ -214,8 +213,11 @@ impl<'a, T> DoublyLinkedList<T> {
                     self.index.set(self.index.get() - 1);
                 }
                 self.length -= 1;
-                let old_last = mem::transmute::<_, Box<Node<T>>>(self.last);
+                let old_last = Box::<Node<T>>::from_raw(self.last);
                 self.last = (*self.last).prev;
+                if !self.last.is_null() {
+                    (*self.last).next = ptr::null_mut();
+                }
                 Some((*old_last).value)
             }
         }
@@ -230,8 +232,11 @@ impl<'a, T> DoublyLinkedList<T> {
                     self.current.set((*self.first).next);
                 }
                 self.length -= 1;
-                let old_first = mem::transmute::<_, Box<Node<T>>>(self.first);
+                let old_first = Box::<Node<T>>::from_raw(self.first);
                 self.first = (*self.first).next;
+                if !self.first.is_null() {
+                    (*self.first).prev = ptr::null_mut();
+                }
                 Some((*old_first).value)
             }
         }
@@ -266,18 +271,15 @@ impl<'a, T> DoublyLinkedList<T> {
             unsafe {
                 self.go_to(i);
 
-                let val = ptr::read(&(*self.current.get()).value);
-
                 (*(*self.current.get()).next).prev = (*self.current.get()).prev;
                 (*(*self.current.get()).prev).next = (*self.current.get()).next;
 
-                let old_node = self.current.get();
-                self.current.set((*self.current.get()).next);
-                drop(mem::transmute::<_, Box<Node<T>>>(old_node));
+                let old = Box::<Node<T>>::from_raw(self.current.get());
 
+                self.current.set((*self.current.get()).next);
                 self.length -= 1;
 
-                val
+                (*old).value
             }
         }
     }
@@ -376,8 +378,7 @@ impl<T> Node<T> {
 
     unsafe fn new_boxed(v: T) -> *mut Node<T> {
         let node = Box::new(Node::new(v));
-        let node: *mut Node<T> = mem::transmute(node);
-        return node;
+        return Box::into_raw(node);
     }
 }
 
