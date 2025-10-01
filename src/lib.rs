@@ -471,4 +471,47 @@ mod tests {
 
         assert!(!dl.is_empty());
     }
+
+    #[test]
+    fn test_boxed_elems() {
+        let mut dl: DoublyLinkedList<Box<i32>> = DoublyLinkedList::new();
+        dl.push_back(Box::new(5));
+        dl.push_back(Box::new(10));
+        dl.push_front(Box::new(3));
+        assert_eq!(*dl.pop_front().unwrap(), 3);
+        assert_eq!(*dl.pop_back().unwrap(), 10);
+        assert_eq!(*dl.pop_back().unwrap(), 5);
+        assert!(dl.pop_back().is_none());
+    }
+
+    #[test]
+    fn test_remove() {
+        let mut dl: DoublyLinkedList<i32> = (0..10).collect();
+        assert_eq!(dl.remove(0), 0);
+        assert_eq!(dl.remove(4), 5);
+        assert_eq!(dl.remove(7), 9);
+        assert_eq!(dl.len(), 7);
+        assert_eq!(dl.iter().cloned().collect::<Vec<i32>>(), vec![1, 2, 3, 4, 6, 7, 8]);
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut dl: DoublyLinkedList<i32> = (0..5).collect();
+        dl.insert(0, 10);
+        dl.insert(3, 20);
+        dl.insert(7, 30);
+        assert_eq!(dl.len(), 8);
+        assert_eq!(dl.iter().cloned().collect::<Vec<i32>>(), vec![10, 0, 1, 20, 2, 3, 4, 30]);
+    }
+
+    #[test]
+    fn test_remove_pop_insert() {
+        let mut dl: DoublyLinkedList<i32> = (0..5).collect();
+        assert_eq!(dl.remove(0), 0);
+        assert_eq!(dl.pop_front().unwrap(), 1);
+        assert_eq!(dl.pop_back().unwrap(), 4);
+        dl.insert(1, 10);
+        assert_eq!(dl.len(), 3);
+        assert_eq!(dl.iter().cloned().collect::<Vec<i32>>(), vec![2, 10, 3]);
+    }
 }
