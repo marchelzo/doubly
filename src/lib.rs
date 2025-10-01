@@ -214,7 +214,7 @@ impl<'a, T> DoublyLinkedList<T> {
                 }
                 self.length -= 1;
                 let old_last = Box::<Node<T>>::from_raw(self.last);
-                self.last = (*self.last).prev;
+                self.last = old_last.prev;
                 if !self.last.is_null() {
                     (*self.last).next = ptr::null_mut();
                 }
@@ -233,7 +233,7 @@ impl<'a, T> DoublyLinkedList<T> {
                 }
                 self.length -= 1;
                 let old_first = Box::<Node<T>>::from_raw(self.first);
-                self.first = (*self.first).next;
+                self.first = old_first.next;
                 if !self.first.is_null() {
                     (*self.first).prev = ptr::null_mut();
                 }
@@ -276,7 +276,7 @@ impl<'a, T> DoublyLinkedList<T> {
 
                 let old = Box::<Node<T>>::from_raw(self.current.get());
 
-                self.current.set((*self.current.get()).next);
+                self.current.set(old.next);
                 self.length -= 1;
 
                 (*old).value
@@ -289,7 +289,11 @@ impl<'a, T> DoublyLinkedList<T> {
             self.length += other.len();
             (*self.last).next = other.first;
             self.last = other.last;
-            *other = Self::new();
+            other.current.set(ptr::null_mut());
+            other.first = ptr::null_mut();
+            other.last = ptr::null_mut();
+            other.index.set(-1);
+            other.length = 0;
         }
     }
 }
@@ -310,6 +314,12 @@ impl<T> IndexMut<usize> for DoublyLinkedList<T> {
 impl<T> Default for DoublyLinkedList<T> {
     fn default() -> DoublyLinkedList<T> {
         DoublyLinkedList::new()
+    }
+}
+
+impl<T> Drop for DoublyLinkedList<T> {
+    fn drop(&mut self) {
+        while self.pop_front().is_some() {}
     }
 }
 
